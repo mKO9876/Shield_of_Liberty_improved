@@ -1,0 +1,6 @@
+Flask
+pandas
+scikit-learn==1.9.0
+joblib
+gunicorn
+networkx==3.6.1

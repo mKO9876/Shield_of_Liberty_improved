@@ -1,0 +1,25 @@
+{
+  "name": "adblocker",
+  "version": "1.0.0",
+  "main": "navigate.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mKO9876/AdBlocker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mKO9876/AdBlocker/issues"
+  },
+  "homepage": "https://github.com/mKO9876/AdBlocker#readme",
+  "description": "",
+  "types": "module",
+  "dependencies": {
+    "json2csv": "^6.0.0-alpha.2",
+    "puppeteer": "^24.43.1"
+  }
+}

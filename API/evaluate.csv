@@ -1,1 +1,0 @@
-method,resourceType,initiatorType,domainEntropy,urlEntropy,isThirdParty,hasUUID,urlLength,,status,mimeType,latency,hassizeBytes,directDomConnections,isAttachedToDom,suspiciousResHeaders,suspiciousReqHeaders,chainLength,uniqueDomainsInChain,,consecutiveSameDomainTrack,queryParamsCount,url,mainPageUrl,predictedLabel

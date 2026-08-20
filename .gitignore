@@ -1,0 +1,6 @@
+/Model/Trening/.ipynb_checkpoints
+Scraper/data/datasetGraph.json
+Scraper/data/datasetNetwork.json
+/Scraper/node_modules
+/Scraper/puppeteer_profile
+Model/Trening/final_df.csv

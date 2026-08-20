@@ -85,8 +85,8 @@ def categMimeType(mime):
 
 
 def categMethod(method):
-  m =str(method).lower()
-  if m =="get" or m=="post": return m.upper()
+  m =str(method).upper()
+  if m =="GET" or m=="POST": return m
   else: return "other"
 
 

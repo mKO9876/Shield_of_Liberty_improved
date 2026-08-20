@@ -39,8 +39,11 @@ def extractDOMAndChainFeatures(graph, row, df_requests=None):
 
         for node in graph_data.get('nodes', []):
             dom_G.add_node(node['id'])
-            # Save node ID if resolvedUrl matches the request URL
-            if node.get('resolvedUrl') == req_url:
+            # Match against resolvedUrls array (new format) or resolvedUrl (old format)
+            node_urls = node.get('resolvedUrls', [])
+            if not node_urls and node.get('resolvedUrl'):
+                node_urls = [node['resolvedUrl']]
+            if req_url in node_urls:
                 matched_node_ids.append(node['id'])
 
         for edge in graph_data.get('edges', []):

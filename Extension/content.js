@@ -1,10 +1,18 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'extractDOM') {
+        // Initial DOM extraction — sends graph back to background via runtime message
         const domGraph = buildDOMGraph();
         chrome.runtime.sendMessage({ 
             action: 'domGraph', 
             graph: domGraph 
         });
+    }
+
+    if (message.action === 'extractDOMForUpdate') {
+        // Periodic update — returns DOM graph via sendResponse callback
+        const domGraph = buildDOMGraph();
+        sendResponse(domGraph);
+        return; // synchronous response
     }
 
     if (message.action === 'neutralize') {
@@ -13,8 +21,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function buildDOMGraph() {
-    console.log("CREATING GRAPH")
-    // Replicates scrape.js page.evaluate() exactly
     const nodes = [];
     const edges = [];
     let idCounter = 0;
@@ -36,7 +42,7 @@ function buildDOMGraph() {
         nodes.push({
             id: currentId,
             tag: element.tagName.toLowerCase(),
-            resolvedUrl: absoluteUrl  // join key Python uses to match network requests
+            resolvedUrl: absoluteUrl
         });
 
         if (parentId !== null) {

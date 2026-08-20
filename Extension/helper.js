@@ -49,6 +49,12 @@ export async function extractRequestData(details, tabUrl = null) {
     }
 
     const resContentLength = getResHeader('content-length');
+    // content-length is often missing in HTTP/2 (chunked/streaming responses)
+    // Infer "has body" from: explicit content-length > 0, OR status indicates content exists
+    const statusCode = details.statusCode || 0;
+    const hasBody = resContentLength 
+        ? parseInt(resContentLength) 
+        : (statusCode >= 200 && statusCode !== 204 && statusCode !== 304 && statusCode < 400) ? 1 : 0;
 
     return {
         url: urlStr,
@@ -61,18 +67,18 @@ export async function extractRequestData(details, tabUrl = null) {
         urlEntropy: calculateEntropy(urlStr),
         isThirdParty: isThirdParty,
         //reqHeaderCount: details.requestHeaders ? details.requestHeaders.length : 0,
-        reqHeader: details.requestHeaders || {},
+        reqHeader: details.requestHeaders || [],
         hasUUID: /[a-f0-9]{8,}/i.test(urlStr),
         urlLength: urlStr.length,
         ...heuristics,
         status: details.statusCode || 0,
         mimeType: getResHeader('content-type') || 'unknown',
-        hassizeBytes: resContentLength ? parseInt(resContentLength) : 0,
+        hassizeBytes: hasBody,
         setCookies: !!getResHeader('set-cookie'),
         //resHeaderCount: details.responseHeaders ? details.responseHeaders.length : 0,
         latency: startTime ? (Date.now() - startTime) : 0,
         isPotentialPixel: (getResourceType(details) === 'image' && resContentLength && parseInt(resContentLength) < 100),
-        resHeader: details.responseHeaders || {}
+        resHeader: details.responseHeaders || []
     };
 }
 

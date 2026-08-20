@@ -26,12 +26,23 @@ export async function initializeRules() {
 
 /**
  * Adds a blocking rule scoped STRICTLY to a specific tabId.
+ * Skips if a rule with the same urlFilter already exists for this tab.
  */
 export async function addBlockingRule(urlFilter, tabId) {
     if (!tabId) {
         console.warn("No tabId provided for rule; skipping to avoid global block.");
         return false;
     }
+
+    // Check for duplicate: skip if this URL is already blocked for this tab
+    try {
+        const existingRules = await chrome.declarativeNetRequest.getSessionRules();
+        const alreadyExists = existingRules.some(rule =>
+            rule.condition.urlFilter === urlFilter &&
+            rule.condition.tabIds && rule.condition.tabIds.includes(tabId)
+        );
+        if (alreadyExists) return true; // already blocked, no-op
+    } catch (e) { /* proceed anyway */ }
 
     let currentRuleId = null;
     try {

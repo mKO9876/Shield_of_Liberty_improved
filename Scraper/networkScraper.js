@@ -28,9 +28,11 @@ const getInitiatorUrl = (request) => {
     // If initiated directly by a document/parser URL
     if (initiator.url) return initiator.url;
 
-    // If initiated by a script, grab the top frame of the stack trace
+    // If initiated by a script, grab the outermost frame (the script that started the chain)
     if (initiator.stack && initiator.stack.callFrames && initiator.stack.callFrames.length > 0) {
-        return initiator.stack.callFrames[0].url;
+        // Use outermost frame for consistent chain analysis
+        const frames = initiator.stack.callFrames.filter(f => f.url);
+        return frames.length > 0 ? frames[frames.length - 1].url : null;
     }
 
     return null;
@@ -63,11 +65,18 @@ const analyzeURL = (urlStr) => {
 const onRequestFinished = async (request, page, timingsMap, storage) => {
     try {
         const response = await request.response();
-        if (!response) return;
+        if (!response) {
+            // Clean up timing entry for aborted requests
+            timingsMap.delete(request.url());
+            return;
+        }
 
         const urlStr = request.url();
         // Ignore data URIs to keep the graph clean
-        if (urlStr.startsWith('data:')) return;
+        if (urlStr.startsWith('data:')) {
+            timingsMap.delete(urlStr);
+            return;
+        }
 
         const urlObj = new URL(urlStr);
         const responseHeaders = response.headers();
@@ -77,7 +86,9 @@ const onRequestFinished = async (request, page, timingsMap, storage) => {
         const timing = timingsMap.get(urlStr) || {};
         const mainPageUrl = page.url();
 
-        // Structure Request and Response as distinct grouped objects
+        // Parse content-length as integer (not string)
+        const contentLength = parseInt(responseHeaders['content-length']) || 0;
+
         const dataPoint = {
             url: urlStr,
             mainPageUrl: mainPageUrl,
@@ -89,23 +100,27 @@ const onRequestFinished = async (request, page, timingsMap, storage) => {
             urlEntropy: calculateEntropy(urlStr),
             isThirdParty: new URL(mainPageUrl).hostname !== urlObj.hostname,
             reqHeaderCount: Object.keys(requestHeaders).length,
-            reqHeader:requestHeaders,
+            reqHeader: requestHeaders,
             hasUUID: /[a-f0-9]{8,}/i.test(urlStr),
             urlLength: urlStr.length,
             ...heuristics,
             status: response.status(),
             mimeType: mimeType,
-            hassizeBytes: responseHeaders['content-length'],
+            hassizeBytes: contentLength,
             setCookies: !!responseHeaders['set-cookie'],
             resHeaderCount: Object.keys(responseHeaders).length,
             latency: timing.start ? Date.now() - timing.start : 0,
-            isPotentialPixel: request.resourceType() === 'image' && (parseInt(responseHeaders['content-length']) < 100),
+            isPotentialPixel: request.resourceType() === 'image' && contentLength > 0 && contentLength < 100,
             resHeader: responseHeaders
         };
 
         storage.push(dataPoint);
+
+        // Clean up timing entry
+        timingsMap.delete(urlStr);
     } catch (err) {
         console.error(`❌ Error processing request ${request.url()}:`, err.message);
+        timingsMap.delete(request.url());
     }
 }
 
